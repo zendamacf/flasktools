@@ -7,28 +7,26 @@ from collections import OrderedDict
 # Third party imports
 from flask import (
 	Flask, g, redirect, url_for, session, request,
-	current_app as app
+	jsonify, current_app as app
 )
 from passlib.context import CryptContext
+import psycopg2
+import psycopg2.extras
 
 
 def check_login(username, password):
 	ok = False
 	if username is not None and password is not None:
-		cursor = g.conn.cursor()
-		cursor.execute("""SELECT * FROM app.enduser WHERE TRIM(username) = TRIM(%s)""", (username,))
-		if cursor.rowcount > 0:
-			resp = query_to_dict_list(cursor)[0]
+		existing = fetch_query("""SELECT * FROM app.enduser WHERE TRIM(username) = TRIM(%s)""", (username,))
+		if existing:
 			password_context = CryptContext().from_path(os.path.dirname(os.path.abspath(__file__)) + '/passlibconfig.ini')
-			ok, new_hash = password_context.verify_and_update(password.strip(), resp['password'].strip())
+			ok, new_hash = password_context.verify_and_update(password.strip(), existing['password'].strip())
 			if ok:
 				if new_hash:
-					cursor.execute("""UPDATE app.enduser SET password = %s WHERE id = %s""", (new_hash, resp['id'],))
-					g.conn.commit()
+					mutate_query("""UPDATE app.enduser SET password = %s WHERE id = %s""", (new_hash, existing['id'],))
 				session.new = True
 				session.permanent = True
-				session['userid'] = resp['id']
-		cursor.close()
+				session['userid'] = existing['id']
 
 	return ok
 
@@ -55,6 +53,72 @@ def params_to_dict(request_params):
 		if value == '':
 			d[key] = None
 	return d
+
+
+def handle_exception():
+	return jsonify(error='Internal error occurred. Please try again later.'), 500
+
+
+def connect_database():
+	# Only initialise connection once per request maximum
+	if 'conn' in g:
+		return g.conn
+	g.conn = psycopg2.connect(
+		database=app.config['DBNAME'], user=app.config['DBUSER'],
+		password=app.config['DBPASS'], port=app.config['DBPORT'],
+		host=app.config['DBHOST'],
+		cursor_factory=psycopg2.extras.DictCursor,
+		application_name=request.path
+	)
+	return g.conn
+
+
+def disconnect_database():
+	if 'conn' in g:
+		g.conn.close()
+
+
+def fetch_query(qry, qargs=None, single_row=False):
+	resp = None
+	conn = connect_database()
+
+	cursor = conn.cursor()
+	try:
+		cursor.execute(qry, qargs)
+		resp = query_to_dict_list(cursor)
+		if single_row is True:
+			resp = resp[0] if len(resp) > 0 else None
+	except psycopg2.DatabaseError:
+		cursor.close()
+		raise
+	cursor.close()
+
+	return resp
+
+
+def mutate_query(qry, qargs=None, returning=False, executemany=False):
+	if returning is True and executemany is True:
+		raise Exception('Cannot run executemany and return results.')
+	resp = None
+	conn = connect_database()
+
+	cursor = conn.cursor()
+	try:
+		if executemany is True:
+			cursor.executemany(qry, qargs)
+		else:
+			cursor.execute(qry, qargs)
+		conn.commit()
+		if returning is True:
+			resp = query_to_dict_list(cursor)
+			resp = resp[0] if len(resp) > 0 else None
+	except psycopg2.DatabaseError:
+		conn.rollback()
+		cursor.close()
+		raise
+	cursor.close()
+
+	return resp
 
 
 def query_to_dict_list(cursor):
