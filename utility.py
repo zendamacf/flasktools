@@ -3,6 +3,7 @@ import os
 import requests
 from functools import wraps
 from collections import OrderedDict
+import json
 
 # Third party imports
 from flask import (
@@ -45,11 +46,13 @@ def is_logged_in():
 	return session.get('userid') is not None
 
 
-def params_to_dict(request_params):
+def params_to_dict(request_params, bool_keys=[]):
 	d = request_params.to_dict()
 	for key, value in d.items():
 		if isinstance(value, str):
 			value = value.strip()
+		if key in bool_keys:
+			d[key] = json.loads(value)
 		if value == '':
 			d[key] = None
 	return d
