@@ -18,13 +18,13 @@ import psycopg2.extras
 def check_login(username, password):
 	ok = False
 	if username is not None and password is not None:
-		existing = fetch_query("""SELECT * FROM app.enduser WHERE TRIM(username) = TRIM(%s)""", (username,))
+		existing = fetch_query("SELECT * FROM app.enduser WHERE TRIM(username) = TRIM(%s)", (username,), single_row=True)
 		if existing:
 			password_context = CryptContext().from_path(os.path.dirname(os.path.abspath(__file__)) + '/passlibconfig.ini')
 			ok, new_hash = password_context.verify_and_update(password.strip(), existing['password'].strip())
 			if ok:
 				if new_hash:
-					mutate_query("""UPDATE app.enduser SET password = %s WHERE id = %s""", (new_hash, existing['id'],))
+					mutate_query("UPDATE app.enduser SET password = %s WHERE id = %s", (new_hash, existing['id'],))
 				session.new = True
 				session.permanent = True
 				session['userid'] = existing['id']
