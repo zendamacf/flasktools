@@ -13,6 +13,7 @@ from flask import (
 from passlib.context import CryptContext
 import psycopg2
 import psycopg2.extras
+from celery import Celery
 
 
 def check_login(username, password):
@@ -40,6 +41,23 @@ def login_required(f):
 		return f(*args, **kwargs)
 
 	return decorated_function
+
+
+def setup_celery(app):
+	celery = Celery(
+		app.import_name,
+		backend=app.config['CELERY_BACKEND'],
+		broker=app.config['CELERY_BROKER']
+	)
+	celery.conf.update(app.config)
+
+	class ContextTask(celery.Task):
+		def __call__(self, *args, **kwargs):
+			with app.app_context():
+				return self.run(*args, **kwargs)
+
+	celery.Task = ContextTask
+	return celery
 
 
 def is_logged_in():
