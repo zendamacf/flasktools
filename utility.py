@@ -88,9 +88,9 @@ def connect_database():
 		database=app.config['DBNAME'], user=app.config['DBUSER'],
 		password=app.config['DBPASS'], port=app.config['DBPORT'],
 		host=app.config['DBHOST'],
-		cursor_factory=psycopg2.extras.DictCursor,
-		application_name=request.path
+		cursor_factory=psycopg2.extras.DictCursor
 	)
+	# Not using request path as application due to Celery
 	return g.conn
 
 
