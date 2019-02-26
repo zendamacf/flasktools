@@ -14,6 +14,8 @@ from passlib.context import CryptContext
 import psycopg2
 import psycopg2.extras
 from celery import Celery
+from celery.bin.celery import CeleryCommand
+from celery.bin.base import Error as CeleryException
 
 
 def check_login(username, password):
@@ -43,13 +45,33 @@ def login_required(f):
 	return decorated_function
 
 
-def setup_celery(app):
+def check_celery_running(f):
+	@wraps(f)
+	def decorated_function(*args, **kwargs):
+		# Initialise Celery app in library internals
+		init_celery(app)
+		status = CeleryCommand.commands['status']()
+		status.app = status.get_app()
+		try:
+			status.run()
+		except CeleryException:
+			raise Exception('No Celery service running.')
+		return f(*args, **kwargs)
+
+	return decorated_function
+
+
+def init_celery(app):
 	celery = Celery(
 		app.import_name,
 		backend=app.config['CELERY_BACKEND'],
 		broker=app.config['CELERY_BROKER']
 	)
-	celery.conf.update(app.config)
+	return celery
+
+
+def setup_celery(app):
+	celery = init_celery(app)
 
 	class ContextTask(celery.Task):
 		def __call__(self, *args, **kwargs):
