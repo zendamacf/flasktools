@@ -205,9 +205,10 @@ def pagecount(count, limit):
 
 def fetch_image(filename, url):
 	urlretrieve(url, get_static_file(filename))
-	img = Image.open(get_static_file(filename))
-	img_scaled = img.resize((int(img.size[0] / 2), int(img.size[1] / 2)), Image.ANTIALIAS)
-	img_scaled.save(get_static_file(filename), optimize=True, quality=95)
+	if not filename.endswith('.svg'):
+		img = Image.open(get_static_file(filename))
+		img_scaled = img.resize((int(img.size[0] / 2), int(img.size[1] / 2)), Image.ANTIALIAS)
+		img_scaled.save(get_static_file(filename), optimize=True, quality=95)
 	print('Fetched {}'.format(url))
 
 
