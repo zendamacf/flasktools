@@ -4,6 +4,7 @@ import requests
 from functools import wraps
 from collections import OrderedDict
 import json
+from urllib.request import urlretrieve
 
 # Third party imports
 from flask import (
@@ -13,6 +14,7 @@ from flask import (
 from passlib.context import CryptContext
 import psycopg2
 import psycopg2.extras
+from PIL import Image
 from celery import Celery
 from celery.bin.celery import CeleryCommand
 from celery.bin.base import Error as CeleryException
@@ -199,6 +201,14 @@ def pagecount(count, limit):
 			if limit % count != 0:
 				pages = math.ceil(pages)
 	return int(pages)
+
+
+def fetch_image(filename, url):
+	urlretrieve(url, get_static_file(filename))
+	img = Image.open(get_static_file(filename))
+	img_scaled = img.resize((int(img.size[0] / 2), int(img.size[1] / 2)), Image.ANTIALIAS)
+	img_scaled.save(get_static_file(filename), optimize=True, quality=95)
+	print('Fetched {}'.format(url))
 
 
 def check_image_exists(imageurl):
