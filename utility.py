@@ -209,7 +209,7 @@ def fetch_image(filename, url):
 		img = Image.open(get_static_file(filename))
 		img_scaled = img.resize((int(img.size[0] / 2), int(img.size[1] / 2)), Image.ANTIALIAS)
 		img_scaled.save(get_static_file(filename), optimize=True, quality=95)
-	app.logger.info('Fetched {}'.format(url))
+	print('Fetched {}'.format(url))
 
 
 def check_image_exists(imageurl):
