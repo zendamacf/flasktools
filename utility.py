@@ -88,8 +88,9 @@ def is_logged_in():
 	return session.get('userid') is not None
 
 
-def params_to_dict(request_params, bool_keys=[]):
-	d = request_params.to_dict()
+def params_to_dict(d, bool_keys=[]):
+	if not isinstance(d, dict):
+		d = d.to_dict()
 	for key, value in d.items():
 		if isinstance(value, str):
 			value = value.strip()
