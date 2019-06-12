@@ -11,6 +11,7 @@ from flask import (
 	Flask, g, redirect, url_for, session, request,
 	jsonify, current_app as app
 )
+from werkzeug import ImmutableMultiDict
 from passlib.context import CryptContext
 import psycopg2
 import psycopg2.extras
@@ -89,7 +90,8 @@ def is_logged_in():
 
 
 def params_to_dict(d, bool_keys=[]):
-	if not isinstance(d, dict):
+	if isinstance(d, ImmutableMultiDict):
+		# Convert Flask request dict to normal dict
 		d = d.to_dict()
 	for key, value in d.items():
 		if isinstance(value, str):
