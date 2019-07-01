@@ -11,6 +11,10 @@ from flask import (
 	Flask, g, redirect, url_for, session, request,
 	jsonify, current_app as app
 )
+from itsdangerous import (
+	TimedJSONWebSignatureSerializer as Serializer, BadSignature,
+	SignatureExpired
+)
 from werkzeug import ImmutableMultiDict
 from passlib.context import CryptContext
 import psycopg2
@@ -20,20 +24,18 @@ from celery import Celery
 from celery.bin.celery import CeleryCommand
 from celery.bin.base import Error as CeleryException
 
+# Local imports
+from web import config
+
 
 def check_login(username, password):
 	ok = False
-	if username is not None and password is not None:
-		existing = fetch_query("SELECT * FROM app.enduser WHERE TRIM(username) = TRIM(%s)", (username,), single_row=True)
-		if existing:
-			password_context = CryptContext().from_path(os.path.dirname(os.path.abspath(__file__)) + '/passlibconfig.ini')
-			ok, new_hash = password_context.verify_and_update(password.strip(), existing['password'].strip())
-			if ok:
-				if new_hash:
-					mutate_query("UPDATE app.enduser SET password = %s WHERE id = %s", (new_hash, existing['id'],))
-				session.new = True
-				session.permanent = True
-				session['userid'] = existing['id']
+
+	userid = authenticate_user(username, password)
+	if userid is not None:
+		session.new = True
+		session.permanent = True
+		session['userid'] = userid
 
 	return ok
 
@@ -43,6 +45,68 @@ def login_required(f):
 	def decorated_function(*args, **kwargs):
 		if not is_logged_in():
 			return redirect(url_for('login'))
+		return f(*args, **kwargs)
+
+	return decorated_function
+
+
+def authenticate_user(username, password):
+	if username is not None and password is not None:
+		existing = fetch_query(
+			"SELECT * FROM app.enduser WHERE TRIM(username) = TRIM(%s)",
+			(username,),
+			single_row=True
+		)
+		if existing:
+			password_context = CryptContext().from_path(
+				os.path.dirname(os.path.abspath(__file__)) + '/passlibconfig.ini'
+			)
+			ok, new_hash = password_context.verify_and_update(
+				password.strip(),
+				existing['password'].strip()
+			)
+			if ok:
+				if new_hash:
+					mutate_query(
+						"UPDATE app.enduser SET password = %s WHERE id = %s",
+						(new_hash, existing['id'],)
+					)
+
+				return existing['id']
+
+
+# Generate REST API token
+def generate_auth_token(userid, expiration=600):
+	s = Serializer(config.SECRET_KEY, expires_in=expiration)
+	return s.dumps({'id': userid}).decode('utf-8')
+
+
+# Validatie REST API token
+def verify_auth_token(token):
+	if token is None:
+		return False
+	s = Serializer(config.SECRETKEY)
+	try:
+		data = s.loads(token)
+	except SignatureExpired:
+		return False
+	except BadSignature:
+		return False
+	existing = fetch_query(
+		"SELECT * FROM app.enduser WHERE id = %s",
+		(data['id'],),
+		single_row=True
+	)
+	if existing:
+		return True
+	return False
+
+
+def auth_token_required(f):
+	@wraps(f)
+	def decorated_function(*args, **kwargs):
+		if verify_auth_token(request.headers.get('Authorization')) is False:
+			return jsonify('Unauthorized access.'), 401
 		return f(*args, **kwargs)
 
 	return decorated_function
@@ -67,8 +131,8 @@ def check_celery_running(f):
 def init_celery(app):
 	celery = Celery(
 		app.import_name,
-		backend=app.config['CELERY_BACKEND'],
-		broker=app.config['CELERY_BROKER']
+		backend=config.CELERY_BACKEND,
+		broker=config.CELERY_BROKER
 	)
 	return celery
 
@@ -112,9 +176,9 @@ def connect_database():
 	if 'conn' in g:
 		return g.conn
 	g.conn = psycopg2.connect(
-		database=app.config['DBNAME'], user=app.config['DBUSER'],
-		password=app.config['DBPASS'], port=app.config['DBPORT'],
-		host=app.config['DBHOST'],
+		database=config.DBNAME, user=config.DBUSER,
+		password=config.DBPASS, port=config.DBPORT,
+		host=config.DBHOST,
 		cursor_factory=psycopg2.extras.DictCursor
 	)
 	# Not using request path as application due to Celery
