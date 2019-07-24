@@ -77,7 +77,7 @@ def authenticate_user(username, password):
 
 # Generate REST API token
 def generate_auth_token(userid, expiration=600):
-	s = Serializer(config.SECRET_KEY, expires_in=expiration)
+	s = Serializer(config.SECRETKEY, expires_in=expiration)
 	return s.dumps({'id': userid}).decode('utf-8')
 
 
