@@ -174,6 +174,7 @@ def handle_exception():
 def connect_database():
 	# Only initialise connection once per request maximum
 	if 'conn' in g:
+		g.conn.set_client_encoding('UTF8')
 		return g.conn
 	g.conn = psycopg2.connect(
 		database=config.DBNAME, user=config.DBUSER,
@@ -181,6 +182,7 @@ def connect_database():
 		host=config.DBHOST,
 		cursor_factory=psycopg2.extras.DictCursor
 	)
+	g.conn.set_client_encoding('UTF8')
 	# Not using request path as application due to Celery
 	return g.conn
 
