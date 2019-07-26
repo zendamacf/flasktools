@@ -250,10 +250,14 @@ def get_static_file(filename):
 
 
 def strip_unicode_characters(s):
-	replacements = {'’': "'"}
+	replacements = {
+		'’': "'",
+		'\u2014': '-',
+		'\u2605': ''
+	}
 	for key, value in replacements.items():
 		s = s.replace(key, value)
-	return s.encode('ascii', 'ignore').decode('ascii')
+	return s
 
 
 def pagecount(count, limit):
