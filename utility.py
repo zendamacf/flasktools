@@ -11,10 +11,6 @@ from flask import (
 	Flask, g, redirect, url_for, session, request,
 	jsonify, current_app as app
 )
-from itsdangerous import (
-	TimedJSONWebSignatureSerializer as Serializer, BadSignature,
-	SignatureExpired
-)
 from werkzeug import ImmutableMultiDict
 from passlib.context import CryptContext
 import psycopg2
@@ -73,43 +69,6 @@ def authenticate_user(username, password):
 					)
 
 				return existing['id']
-
-
-# Generate REST API token
-def generate_auth_token(userid, expiration=600):
-	s = Serializer(config.SECRETKEY, expires_in=expiration)
-	return s.dumps({'id': userid}).decode('utf-8')
-
-
-# Validatie REST API token
-def verify_auth_token(token):
-	if token is None:
-		return False
-	s = Serializer(config.SECRETKEY)
-	try:
-		data = s.loads(token)
-	except SignatureExpired:
-		return False
-	except BadSignature:
-		return False
-	existing = fetch_query(
-		"SELECT * FROM app.enduser WHERE id = %s",
-		(data['id'],),
-		single_row=True
-	)
-	if existing:
-		return True
-	return False
-
-
-def auth_token_required(f):
-	@wraps(f)
-	def decorated_function(*args, **kwargs):
-		if verify_auth_token(request.headers.get('Authorization')) is False:
-			return jsonify('Unauthorized access.'), 401
-		return f(*args, **kwargs)
-
-	return decorated_function
 
 
 def check_celery_running(f):
