@@ -29,6 +29,7 @@ def check_login(username: str, password: str) -> bool:
 
 	userid = authenticate_user(username, password)
 	if userid is not None:
+		ok = True
 		session.new = True
 		session.permanent = True
 		session['userid'] = userid
