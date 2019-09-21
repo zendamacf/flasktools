@@ -152,7 +152,7 @@ def disconnect_database() -> None:
 		g.conn.close()
 
 
-def fetch_query(qry: str, qargs: list = None, single_row: bool = False) -> any:
+def fetch_query(qry: str, qargs: tuple = None, single_row: bool = False) -> any:
 	resp = None
 	conn = connect_database()
 
@@ -170,7 +170,7 @@ def fetch_query(qry: str, qargs: list = None, single_row: bool = False) -> any:
 	return resp
 
 
-def mutate_query(qry: str, qargs: list = None, returning: bool = False, executemany: bool = False) -> any:
+def mutate_query(qry: str, qargs: tuple = None, returning: bool = False, executemany: bool = False) -> any:
 	if returning is True and executemany is True:
 		raise Exception('Cannot run executemany and return results.')
 	resp = None
