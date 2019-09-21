@@ -9,7 +9,7 @@ from urllib.request import urlretrieve
 # Third party imports
 from flask import (
 	Flask, g, redirect, url_for, session, request,
-	jsonify, current_app as app
+	jsonify, Response, current_app as app
 )
 from werkzeug import ImmutableMultiDict
 from passlib.context import CryptContext
@@ -24,7 +24,7 @@ from celery.bin.base import Error as CeleryException
 from web import config
 
 
-def check_login(username, password):
+def check_login(username: str, password: str) -> bool:
 	ok = False
 
 	userid = authenticate_user(username, password)
@@ -46,7 +46,7 @@ def login_required(f):
 	return decorated_function
 
 
-def authenticate_user(username, password):
+def authenticate_user(username: str, password: str) -> int:
 	if username is not None and password is not None:
 		existing = fetch_query(
 			"SELECT * FROM app.enduser WHERE TRIM(username) = TRIM(%s)",
@@ -87,7 +87,7 @@ def check_celery_running(f):
 	return decorated_function
 
 
-def init_celery(app):
+def init_celery(app: Flask) -> Celery:
 	celery = Celery(
 		app.import_name,
 		backend=config.CELERY_BACKEND,
@@ -96,7 +96,7 @@ def init_celery(app):
 	return celery
 
 
-def setup_celery(app):
+def setup_celery(app: Flask) -> Celery:
 	celery = init_celery(app)
 
 	class ContextTask(celery.Task):
@@ -108,11 +108,11 @@ def setup_celery(app):
 	return celery
 
 
-def is_logged_in():
+def is_logged_in() -> bool:
 	return session.get('userid') is not None
 
 
-def params_to_dict(d, bool_keys=[]):
+def params_to_dict(d: ImmutableMultiDict, bool_keys: list = []) -> dict:
 	if isinstance(d, ImmutableMultiDict):
 		# Convert Flask request dict to normal dict
 		d = d.to_dict()
@@ -126,11 +126,11 @@ def params_to_dict(d, bool_keys=[]):
 	return d
 
 
-def handle_exception():
+def handle_exception() -> Response:
 	return jsonify(error='Internal error occurred. Please try again later.'), 500
 
 
-def connect_database():
+def connect_database() -> psycopg2.extensions.connection:
 	# Only initialise connection once per request maximum
 	if 'conn' in g:
 		g.conn.set_client_encoding('UTF8')
@@ -146,12 +146,12 @@ def connect_database():
 	return g.conn
 
 
-def disconnect_database():
+def disconnect_database() -> None:
 	if 'conn' in g:
 		g.conn.close()
 
 
-def fetch_query(qry, qargs=None, single_row=False):
+def fetch_query(qry: str, qargs: list = None, single_row: bool = False) -> any:
 	resp = None
 	conn = connect_database()
 
@@ -169,7 +169,7 @@ def fetch_query(qry, qargs=None, single_row=False):
 	return resp
 
 
-def mutate_query(qry, qargs=None, returning=False, executemany=False):
+def mutate_query(qry: str, qargs: list = None, returning: bool = False, executemany: bool = False) -> any:
 	if returning is True and executemany is True:
 		raise Exception('Cannot run executemany and return results.')
 	resp = None
@@ -194,7 +194,7 @@ def mutate_query(qry, qargs=None, returning=False, executemany=False):
 	return resp
 
 
-def query_to_dict_list(cursor):
+def query_to_dict_list(cursor: psycopg2.extras.DictCursor) -> list:
 	d = []
 	for row in cursor.fetchall():
 		r = OrderedDict()
@@ -206,11 +206,11 @@ def query_to_dict_list(cursor):
 	return d
 
 
-def get_static_file(filename):
+def get_static_file(filename: str) -> str:
 	return app.static_folder + filename
 
 
-def strip_unicode_characters(s):
+def strip_unicode_characters(s: str) -> str:
 	replacements = {
 		'’': "'",
 		'\u2014': '-',
@@ -221,7 +221,7 @@ def strip_unicode_characters(s):
 	return s
 
 
-def pagecount(count, limit):
+def pagecount(count: int, limit: int) -> int:
 	import math
 	pages = 0
 	if count:
@@ -235,7 +235,7 @@ def pagecount(count, limit):
 	return int(pages)
 
 
-def fetch_image(filename, url):
+def fetch_image(filename: str, url: str) -> None:
 	urlretrieve(url, filename)
 	if not filename.endswith('.svg'):
 		img = Image.open(filename)
@@ -244,7 +244,7 @@ def fetch_image(filename, url):
 	print('Fetched {}'.format(url))
 
 
-def check_image_exists(imageurl):
+def check_image_exists(imageurl: str) -> bool:
 	resp = requests.get(imageurl)
 	return resp.status_code == 200
 
@@ -255,20 +255,20 @@ class BetterExceptionFlask(Flask):
 		in exception emails.
 		"""
 		err_text = """
-URL:                  %s%s
-HTTP Method:          %s
-Client IP Address:    %s
+URL:                  {}{}
+HTTP Method:          {}
+Client IP Address:    {}
 
 request.form:
-%s
+{}
 
 request.args:
-%s
+{}
 
 session:
-%s
+{}
 
-""" % (
+""".format(
 			request.host, request.path,
 			request.method,
 			request.remote_addr,
