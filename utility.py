@@ -91,8 +91,8 @@ def check_celery_running(f):
 def init_celery(app: Flask) -> Celery:
 	celery = Celery(
 		app.import_name,
-		backend=config.CELERY_BACKEND,
-		broker=config.CELERY_BROKER
+		backend='redis://',
+		broker='redis://localhost:6379/0'
 	)
 	return celery
 
