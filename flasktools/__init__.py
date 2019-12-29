@@ -38,9 +38,9 @@ def serve_static_file(filename: str) -> str:
 	try:
 		timestamp = str(os.path.getmtime(fullpath))
 	except OSError:
-		return filename
+		return f'/static/{filename}'
 
-	newfilename = f'{app.static_folder}{filename}?v={timestamp}'
+	newfilename = f'/static/{filename}?v={timestamp}'
 	return newfilename
 
 
