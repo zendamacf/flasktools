@@ -1,4 +1,5 @@
 # Standard library imports
+import os
 import json
 from urllib.request import urlretrieve
 
@@ -30,6 +31,17 @@ def handle_exception() -> Response:
 
 def get_static_file(filename: str) -> str:
 	return app.static_folder + filename
+
+
+def serve_static_file(filename: str) -> str:
+	fullpath = os.path.join(app.static_folder, filename)
+	try:
+		timestamp = str(os.path.getmtime(fullpath))
+	except OSError:
+		return filename
+
+	newfilename = '{0}?v={1}'.format(filename, timestamp)
+	return newfilename
 
 
 def strip_unicode_characters(s: str) -> str:
