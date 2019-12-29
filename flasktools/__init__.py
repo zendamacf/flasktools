@@ -5,7 +5,7 @@ from urllib.request import urlretrieve
 
 # Third party imports
 from flask import (
-	jsonify, Response, current_app as app
+	jsonify, Response, url_for, current_app as app
 )
 from werkzeug import ImmutableMultiDict
 from PIL import Image
@@ -33,15 +33,18 @@ def get_static_file(filename: str) -> str:
 	return app.static_folder + filename
 
 
-def serve_static_file(filename: str) -> str:
+def serve_static_file(filename: str, **kwargs) -> str:
 	fullpath = os.path.join(app.static_folder, filename)
 	try:
-		timestamp = str(os.path.getmtime(fullpath))
+		kwargs['v'] = str(os.path.getmtime(fullpath))
 	except OSError:
-		return f'/static/{filename}'
+		pass
 
-	newfilename = f'/static/{filename}?v={timestamp}'
-	return newfilename
+	return url_for(
+		'static',
+		filename=filename,
+		**kwargs
+	)
 
 
 def strip_unicode_characters(s: str) -> str:
