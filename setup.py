@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
 	name='flasktools',
-	version='1.0.1',
+	version='1.0.2',
 	author='Zachary Lang',
 	author_email='zach.d.lang@gmail.com',
 	description='Utilities for Flask websites',
@@ -19,6 +19,9 @@ setuptools.setup(
 		"Operating System :: OS Independent",
 	],
 	python_requires='>=3.6',
+	setup_requires=[
+		'wheel'
+	],
 	install_requires=[
 		'flask',
 		'Pillow',
