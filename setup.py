@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
 	name='flasktools',
-	version='1.0.7',
+	version='1.0.8',
 	author='Zachary Lang',
 	author_email='zach.d.lang@gmail.com',
 	description='Utilities for Flask websites',

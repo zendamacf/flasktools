@@ -36,8 +36,12 @@ def authenticate_user(username: str, password: str) -> int:
 			single_row=True
 		)
 		if existing:
-			password_context = CryptContext().from_path(
-				os.path.dirname(os.path.abspath(__file__)) + '/passlibconfig.ini'
+			password_context = CryptContext(
+				schemes=['pbkdf2_sha512', 'plaintext'],
+				deprecated=['plaintext'],
+				pbkdf2_sha512__min_rounds=10000,
+				pbkdf2_sha512__max_rounds=50000,
+				pbkdf2_sha512__default_rounds=15000
 			)
 			ok, new_hash = password_context.verify_and_update(
 				password.strip(),
