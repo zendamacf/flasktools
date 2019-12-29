@@ -40,7 +40,7 @@ def serve_static_file(filename: str) -> str:
 	except OSError:
 		return filename
 
-	newfilename = '{0}?v={1}'.format(filename, timestamp)
+	newfilename = f'{app.static_folder}{filename}?v={timestamp}'
 	return newfilename
 
 
