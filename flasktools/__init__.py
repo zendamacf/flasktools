@@ -61,8 +61,8 @@ def strip_unicode_characters(s: str) -> str:
 def fetch_image(filename: str, url: str) -> None:
 	urlretrieve(url, filename)
 	if not filename.endswith('.svg'):
-		img = Image.open(filename)
 		try:
+			img = Image.open(filename)
 			img_scaled = img.resize((int(img.size[0] / 2), int(img.size[1] / 2)), Image.ANTIALIAS)
 			img_scaled.save(filename, optimize=True, quality=95)
 		except IOError:
