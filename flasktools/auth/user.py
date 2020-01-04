@@ -6,7 +6,7 @@ from flask import session, redirect, url_for
 from passlib.context import CryptContext
 
 # Local imports
-from ..sitetools import db
+from ..flasktools import db
 
 
 def check_login(username: str, password: str) -> bool:
