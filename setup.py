@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
 	name='flasktools',
-	version='1.0.9',
+	version='1.0.10',
 	author='Zachary Lang',
 	author_email='zach.d.lang@gmail.com',
 	description='Utilities for Flask websites',
@@ -27,6 +27,7 @@ setuptools.setup(
 		'Pillow',
 		'passlib',
 		'celery',
-		'psycopg2'
+		'psycopg2',
+		'pyjwt'
 	]
 )

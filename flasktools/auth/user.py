@@ -1,8 +1,12 @@
-import os
+# Standard library imports
 from functools import wraps
+
+# Third party imports
 from flask import session, redirect, url_for
 from passlib.context import CryptContext
-from . import db
+
+# Local imports
+from sitetools import db
 
 
 def check_login(username: str, password: str) -> bool:
