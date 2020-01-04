@@ -64,7 +64,6 @@ def generate_auth_token(userid: int) -> str:
 def auth_token_required(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
-		print(current_app.name)
 		userid = _validate_auth_token(request.headers.get('Authorization'))
 		if userid is None:
 			return jsonify('Unauthorized access.'), 401
