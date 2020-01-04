@@ -43,7 +43,8 @@ def serve_static_file(filename: str, **kwargs) -> str:
 	return url_for(
 		'static',
 		filename=filename,
-		**kwargs
+		**kwargs,
+		_external=True
 	)
 
 
