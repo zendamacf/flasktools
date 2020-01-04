@@ -7,7 +7,7 @@ from flask import request, jsonify, current_app
 import jwt
 
 # Local imports
-from ..flasktools import db
+from .. import db
 
 LIFE_SPAN = timedelta(hours=1)
 
