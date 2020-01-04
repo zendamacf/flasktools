@@ -7,7 +7,7 @@ from flask import request, jsonify, current_app
 import jwt
 
 # Local imports
-from .. import db
+from .. import db, exceptions
 
 LIFE_SPAN = timedelta(hours=1)
 
@@ -17,9 +17,12 @@ def _gen_token_payload(
 	lifespan: timedelta,
 	token_type: str
 ) -> dict:
+	from web import config
+	if not hasattr(config, 'OAUTH_NAME'):
+		raise exceptions.ConfigException('Missing OAUTH_NAME setting')
 	issued = datetime.now(timezone.utc)
 	return {
-		'iss': current_app.name.upper(),
+		'iss': config.OAUTH_NAME,
 		'iat': issued,
 		'exp': issued + lifespan,
 		'sub': userid,
