@@ -11,7 +11,7 @@ setuptools.setup(
 	description='Utilities for Flask websites',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
-	url='https://github.com/zachdlang/flasktools',
+	url='https://github.com/zendamacf/flasktools',
 	packages=setuptools.find_packages(),
 	classifiers=[
 		"Programming Language :: Python :: 3",
