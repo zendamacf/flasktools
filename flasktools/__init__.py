@@ -7,7 +7,7 @@ from urllib.request import urlretrieve
 from flask import (
 	jsonify, Response, url_for, current_app as app
 )
-from werkzeug import ImmutableMultiDict
+from werkzeug.datastructures import ImmutableMultiDict
 from PIL import Image
 
 
