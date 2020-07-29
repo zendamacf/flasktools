@@ -55,7 +55,10 @@ def strip_unicode_characters(s: str) -> str:
 		'\u2605': '',
 		'\u201c': '"',
 		'\u201d': '"',
-		'\u2022': '-'
+		'\u2022': '-',
+		'\u00a0': ' ',
+		'\u2013': '-',
+		'\u2026': '...'
 	}
 	for key, value in replacements.items():
 		s = s.replace(key, value)
