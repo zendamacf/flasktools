@@ -51,14 +51,23 @@ def serve_static_file(filename: str, **kwargs) -> str:
 def strip_unicode_characters(s: str) -> str:
 	replacements = {
 		'’': "'",
+		'\u00a0': ' ',
+		'\u00c4': 'A',
+		'\u00c6': 'Ae',
+		'\u00e1': 'a',
+		'\u00fa': 'u',
+		'\u00fb': 'u',
+		'\u00fc': 'u',
+		'\u00f6': 'o',
+		'\u2013': '-',
 		'\u2014': '-',
-		'\u2605': '',
+		'\u2018': "'",
+		'\u2019': "'",
+		'\u2022': '-',
+		'\u2026': '...',
 		'\u201c': '"',
 		'\u201d': '"',
-		'\u2022': '-',
-		'\u00a0': ' ',
-		'\u2013': '-',
-		'\u2026': '...'
+		'\u2605': ''
 	}
 	for key, value in replacements.items():
 		s = s.replace(key, value)
