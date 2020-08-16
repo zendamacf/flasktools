@@ -2,17 +2,13 @@
 import os
 import json
 from urllib.request import urlretrieve
-from functools import wraps
 
 # Third party imports
 from flask import (
-	Flask, jsonify, Response, url_for, current_app as app
+	jsonify, Response, url_for, current_app as app
 )
 from werkzeug.datastructures import ImmutableMultiDict
 from PIL import Image
-from celery import Celery
-from celery.bin.celery import CeleryCommand
-from celery.bin.base import Error as CeleryException
 
 
 def params_to_dict(d: ImmutableMultiDict, bool_keys: list = []) -> dict:
@@ -88,40 +84,3 @@ def fetch_image(filename: str, url: str) -> None:
 		except IOError:
 			pass
 	print('Fetched {}'.format(url))
-
-
-def check_celery_running(f):
-	@wraps(f)
-	def decorated_function(*args, **kwargs):
-		# Initialise Celery app in library internals
-		init_celery(app)
-		status = CeleryCommand.commands['status']()
-		status.app = status.get_app()
-		try:
-			status.run()
-		except CeleryException:
-			raise Exception('No Celery service running.')
-		return f(*args, **kwargs)
-
-	return decorated_function
-
-
-def init_celery(app: Flask) -> Celery:
-	celery = Celery(
-		app.import_name,
-		backend='redis://',
-		broker='redis://localhost:6379/0'
-	)
-	return celery
-
-
-def setup_celery(app: Flask) -> Celery:
-	celery = init_celery(app)
-
-	class ContextTask(celery.Task):
-		def __call__(self, *args, **kwargs):
-			with app.app_context():
-				return self.run(*args, **kwargs)
-
-	celery.Task = ContextTask
-	return celery
