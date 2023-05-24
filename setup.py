@@ -28,7 +28,7 @@ setuptools.setup(
 		'passlib>=1.7.4',
 		'celery>=5.2.7',
 		'psycopg2>=2.9.6',
-		'pyjwt>=2.7.0'
-		'redis>=4.5.5'
+		'pyjwt>=2.7.0',
+		'redis>=4.5.5',
 	]
 )
