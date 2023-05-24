@@ -36,7 +36,10 @@ def _validate_auth_token(token: str) -> int:
 		if token is not None:
 			payload = jwt.decode(token.encode(), current_app.secret_key)
 			userid = payload['sub']
-	except (jwt.exceptions.ExpiredSignatureError, jwt.exceptions.InvalidTokenError):
+	except (
+		jwt.exceptions.ExpiredSignatureError,
+		jwt.exceptions.InvalidTokenError
+	):
 		pass
 
 	if userid is not None:

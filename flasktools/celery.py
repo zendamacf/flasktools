@@ -1,7 +1,7 @@
 from functools import wraps
 from celery import Celery
 from celery.bin.celery import CeleryCommand
-from celery.bin.base import Error as CeleryException
+from celery.exceptions import CeleryError as CeleryException
 from flask import Flask, current_app as app
 
 
